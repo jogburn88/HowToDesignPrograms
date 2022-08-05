@@ -21,7 +21,7 @@
 ; places the image of the car x pixels from
 ; the left margin of the BACKGROUND image
 (define (render x)
-  (place-image MOTORCAR (+ (/ (image-width MOTORCAR) 2) x)  (+ (/ (image-height MOTORCAR) 2) 10) BACKGROUND))
+  (place-image MOTORCAR (+ (/ (image-width MOTORCAR) 2) x) (+ (/ (image-height MOTORCAR) 2) 10) BACKGROUND))
 
 ; WorldState -> WorldState
 ; moves the car by 3 pixels for every clock tick
@@ -29,7 +29,7 @@
 ;  given: 20, expect 23
 ;  given: 78, expect 81
 (define (clock-tick-handler cw)
-  (+ cw (* 10 (abs(sin cw)))))
+  (+ cw 3))
 
 ; WorldState -> WorldState
 ; detects when the program should end
@@ -43,5 +43,5 @@
     [to-draw render]
     [stop-when end?]))
 
-(main 1)
+(main 0)
 
