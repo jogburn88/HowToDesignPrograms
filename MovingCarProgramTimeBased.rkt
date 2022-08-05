@@ -29,17 +29,30 @@
 ;  given: 20, expect 23
 ;  given: 78, expect 81
 (define (clock-tick-handler cw)
-  (+ cw (* 10 (abs(sin cw)))))
+  (+ cw 10))
 
 ; WorldState -> WorldState
 ; detects when the program should end
 (define (end? x) (> x WIDTH-OF-WORLD))
+
+; WorldState Number Number String -> WorldState
+; places the car at x-mouse
+; if the given me is "button-down"
+(check-expect (hyper 21 10 20 "enter") 21)
+(check-expect (hyper 42 10 20 "button-down") 10)
+(check-expect (hyper 42 10 20 "move") 42)
+
+(define (hyper x-position-of-car x-mouse y-mouse me)
+  (cond
+    [(string=? "button-down" me) x-mouse]
+    [else x-position-of-car]))
 
 ; WorldState -> WorldState
 ; launches the program from some initial state
 (define (main ws)
   (big-bang ws
     [on-tick clock-tick-handler]
+    [on-mouse hyper]
     [to-draw render]
     [stop-when end?]))
 
