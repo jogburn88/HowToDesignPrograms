@@ -3,52 +3,91 @@
 #reader(lib "htdp-beginner-reader.ss" "lang")((modname ChangingGraph) (read-case-sensitive #t) (teachpacks ((lib "image.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "image.rkt" "teachpack" "2htdp") (lib "universe.rkt" "teachpack" "2htdp") (lib "batch-io.rkt" "teachpack" "2htdp")) #f)))
 (define GRAPH-HEIGHT 25)
 (define GRAPH-WIDTH 200)
-(define GRAPH-COLOR "red")
+(define GRAPH-COLOR "blue")
+(define BAR-COLOR "red")
 
-(define GRAPH (empty-scene GRAPH-WIDTH GRAPH-HEIGHT))
-
-; number -> image
-; definition: fills bar from percentage of full
-(check-expect (bar .43) (rectangle (* GRAPH-WIDTH .43) GRAPH-HEIGHT "solid" GRAPH-COLOR))
-(define (bar percent)
-  (rectangle (* GRAPH-WIDTH percent) GRAPH-HEIGHT "solid" GRAPH-COLOR))
-
-; number number -> number
-; calculates percentage of bar
-(check-expect (ratio 20 200) 0.1)
-(check-expect (ratio 0 200) 0)
-(check-expect (ratio 200 200) 1)
-(define (ratio number GRAPH-WIDTH)
-  (/ number GRAPH-WIDTH))
-
+; render
 ; image image -> image
-; creates the graph image
-; given: the fill bar and the empty graph
-; expect: the fill bar to fit into the empty graph
-(define (graph ws)
-  (place-image (bar (ratio ws GRAPH-WIDTH)) 0 (/ GRAPH-HEIGHT 2) GRAPH))
+; draws the current happiness graph
+(check-expect (render 0) (overlay/align "left" "middle"
+                                         (rectangle 0 GRAPH-HEIGHT "solid" BAR-COLOR)
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" GRAPH-COLOR)))
 
+(check-expect (render 50) (overlay/align "left" "middle"
+                                         (rectangle (/ GRAPH-WIDTH 2) GRAPH-HEIGHT "solid" BAR-COLOR)
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" GRAPH-COLOR)))
+
+(check-expect (render 100) (overlay/align "left" "middle"
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" BAR-COLOR)
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" GRAPH-COLOR)))
+
+(check-expect (render -5) (overlay/align "left" "middle"
+                                         (rectangle 0 GRAPH-HEIGHT "solid" BAR-COLOR)
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" GRAPH-COLOR)))
+
+(check-expect (render 150) (overlay/align "left" "middle"
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" BAR-COLOR)
+                                         (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" GRAPH-COLOR)))
+(define (render score)
+  (overlay/align "left" "middle"
+                 (rectangle (render-score score) GRAPH-HEIGHT "solid" BAR-COLOR)
+                 (rectangle GRAPH-WIDTH GRAPH-HEIGHT "solid" GRAPH-COLOR)))
+
+; render-score
 ; number -> number
-; decreases ws by 1
-(check-expect (clock-beat 3) 2)
-(define (clock-beat ws)
-  (sub1 ws))
+; calculates the score bar length
+(check-expect (render-score 0) 0)
+(check-expect (render-score 100) GRAPH-WIDTH)
+(check-expect (render-score 50) (/ GRAPH-WIDTH 2))
+(check-expect (render-score -5) 0)
+(check-expect (render-score 120) GRAPH-WIDTH)
+(define (render-score score)
+  (cond
+    [(<= score 0) 0]
+    [(<= score 100) (* (/ score 100) GRAPH-WIDTH)]
+    [else GRAPH-WIDTH]))
 
+
+; clock-tick
+; number -> number
+; decreases the happiness
+(check-expect (clock-tick 5) 4.9)
+(check-expect (clock-tick 1) .9)
+(define (clock-tick score)
+  (- score 0.1))
+
+; key-press event
+; arrow-lkey -> number
+; increases happiness
+(check-expect (inc-score 30 "up") 63)
+(check-expect (inc-score 30 "down") 50)
+(check-expect (inc-score 30 "left") 30)
+(define (inc-score score a-key)
+  (cond
+    [(key=? a-key "up") (+ score 33)]
+    [(key=? a-key "down") (+ score 20)]
+    [else score]))
+
+;end?
 ; number -> boolean
-; checks if ws is less than 0
-(check-expect (end? 5) #false)
+; decides if the game is over
 (check-expect (end? -1) #true)
-(check-expect (end? 0) #false)
-(define (end? ws)
-  (> 0 ws))
+(check-expect (end? 0) #true)
+(check-expect (end? 1) #false)
+(check-expect (end? 20) #false)
+              
+(define (end? level)
+  (cond
+    [(<= level 0) #true]
+    [else #false]))
 
-             
 
-; main
-(define (main ws)
-  (big-bang ws
-    [on-draw graph]
-    [on-tick clock-beat]
+; this is the main loop
+(define (gauge-prog score)
+  (big-bang score
+    [on-tick clock-tick]
+    [on-key inc-score]
+    [on-draw render]
     [stop-when end?]))
 
-;(main 400)
+(gauge-prog 100)
