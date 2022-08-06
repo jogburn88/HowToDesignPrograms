@@ -57,7 +57,7 @@
   (- score 0.1))
 
 ; key-press event
-; arrow-lkey -> number
+; arrow-key -> number
 ; increases happiness
 (check-expect (inc-score 30 "up") 63)
 (check-expect (inc-score 30 "down") 50)
@@ -87,7 +87,7 @@
   (big-bang score
     [on-tick clock-tick]
     [on-key inc-score]
-    [on-draw render]
+    [to-draw render]
     [stop-when end?]))
 
 (gauge-prog 100)
